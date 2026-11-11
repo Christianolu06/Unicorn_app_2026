@@ -72,6 +72,10 @@ try:
     def trillions_format(value):
         return f"${value / 1_000_000_000_000:,.2f}T"
 
+        # Empty filters handler
+        def show_empty_msg():
+            st.info("No matching filter. Adjust your selected filters")
+
     # Global Overview
     st.header("1. Global Overview")
     if not filtered_df.empty:
@@ -94,33 +98,60 @@ try:
             industry_counts = (
                 filtered_df['Industry'].value_counts().reset_index()
             )
-        industry_counts.columns = ["Industry", "Companies"]
-
-        fig = px.pie(
-        industry_counts,
-        names="Industry",
-        values="Companies",
-        hole=0.45,
-        title="Unicorns by Industry"
-        )
-        st.plotly_chart(fig, use_container_width=True)
-        
-    with col7:
-        industry_counts = (
-                filtered_df["Continent"].value_counts().reset_index()
+            industry_counts.columns = ["Industry", "Companies"]
+    
+            fig = px.pie(
+            industry_counts,
+            names="Industry",
+            values="Companies",
+            hole=0.45,
+            title="Unicorns by Industry"
             )
-        industry_counts.columns = ["Continent", "Companies"]
-
-        fig = px.bar(
-        industry_counts,
-        x="Continent",
-        y="Companies",
-        color="Continent",
-        title="Unicorns by Continent"
+            st.plotly_chart(fig, use_container_width=True)
+        
+        with col7:
+            industry_counts = (
+                    filtered_df["Continent"].value_counts().reset_index()
+                )
+            industry_counts.columns = ["Continent", "Companies"]
+    
+            fig = px.bar(
+            industry_counts,
+            x="Continent",
+            y="Companies",
+            color="Continent",
+            title="Unicorns by Continent"
+            )
+            st.plotly_chart(fig, use_container_width=True)
+        
+    else:
+        show_show_msg()
+  
+    ### This is another section 
+    st.subheader("Geograhical Distribution Map")
+    if not filtered_df.empty:
+        map_data = (
+        filtered_df.groupby("Country/Region")
+        .agg(
+            Companies=("Company","nunique"),
+            Total_Valuation=("Valuation","sum")
+        )
+        .reset_index()
+        )
+        fig = px.choropleth(
+            map_data,
+            locations="Country/Region",
+            locationmode="country names",
+            color="Companies",
+            hover_name="Country/Region",
+            hover_data=["Total_Valuation"],
+            title="Global Unicorn Distribution",
+            
         )
         st.plotly_chart(fig, use_container_width=True)
-        
-except URLError as e:
+    else:
+        show_show_msg()
+except ValueError as e:
     st.error(
         """
         **File Not Found.**
